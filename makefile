@@ -1,17 +1,19 @@
 CC = gcc
 CFLAGS = -Wall
 
-OBJS = queue.o testafila.o
+LIBOBJS = queue.o
+OBJS = testafila.o
 EXEC = testafila
 
 all: $(EXEC)
 
-$(EXEC): $(OBJS)
+$(EXEC): $(LIBOBJS) $(OBJS)
 
+$(LIBOBJS) : %.o : %.c %.h
 $(OBJS) : %.o : %.c
 
 clean:
 	rm -f *.o
 
 purge: clean
-	rm -f $(EXEC)
+	rm -f $(EXEC) *.out

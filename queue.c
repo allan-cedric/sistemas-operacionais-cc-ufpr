@@ -3,19 +3,17 @@
 
 int queue_size(queue_t *queue)
 {
-    // Se a fila está vazia
+    // Se a fila está vazia, retorna 0
     if (!queue)
         return 0;
 
-    // Caso a fila não esteja vazia
-    int size = 1;
-    queue_t *aux = queue->next;
+    int size = 1; // Pelo menos tem 1 elemento
+    queue_t *aux = queue->next; // Itera a partir do segundo
     while (queue != aux)
     {
         size++;
         aux = aux->next;
     }
-
     return size;
 }
 

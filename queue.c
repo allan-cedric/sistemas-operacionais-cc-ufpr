@@ -1,3 +1,7 @@
+// --- Implementação de uma biblioteca para manipulação de filas circulares (P0) ---
+
+// Autor: Allan Cedric G. B. Alves da Silva - GRR20190351
+
 #include "queue.h"
 #include <stdio.h>
 

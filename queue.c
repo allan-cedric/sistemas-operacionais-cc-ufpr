@@ -118,7 +118,7 @@ int queue_remove(queue_t **queue, queue_t *elem)
         if (elem == aux)
         {
             if (elem == *queue)
-                *queue = (*queue != (*queue)->next ? (*queue)->next : NULL); // Atualiza a cabeça
+                *queue = (*queue != (*queue)->next ? (*queue)->next : NULL); // Ajusta a cabeça
             if (*queue)
             {
                 elem->prev->next = elem->next;
@@ -131,7 +131,6 @@ int queue_remove(queue_t **queue, queue_t *elem)
         aux = aux->next;
     } while (*queue != aux);
 
-    // Caso não encontre o elemento na fila
     fprintf(stderr, "Error (queue_remove): The element is not in this current queue!\n");
     return -5;
 }

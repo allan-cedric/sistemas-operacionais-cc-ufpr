@@ -7,8 +7,8 @@ int queue_size(queue_t *queue)
     if (!queue)
         return 0;
 
-    int size = 1; // Pelo menos tem 1 elemento
-    queue_t *aux = queue->next; // Itera a partir do segundo
+    int size = 1;               // Pelo menos tem 1 elemento
+    queue_t *aux = queue->next; // Itera a partir do possível segundo
     while (queue != aux)
     {
         size++;
@@ -19,19 +19,18 @@ int queue_size(queue_t *queue)
 
 void queue_print(char *name, queue_t *queue, void print_elem(void *))
 {
-    printf("%s", name);
+    printf("%s", name); // Identificador da fila
 
-    // Se a fila está vazia
+    // Se a fila está vazia, imprime uma fila vazia
     if (!queue)
     {
         printf("[]\n");
         return;
     }
 
-    // Caso a fila não esteja vazia
     printf("[");
-    print_elem(queue);
-    queue_t *aux = queue->next;
+    print_elem(queue);          // Pelo menos tem 1 elemento
+    queue_t *aux = queue->next; // Itera a partir do possível segundo
     while (queue != aux)
     {
         printf(" ");

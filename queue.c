@@ -79,7 +79,7 @@ int queue_append(queue_t **queue, queue_t *elem)
         // Ajusta o primeiro elemento
         (*queue)->prev = elem;
 
-        // Ajusta o penúltimo elemento
+        // Ajusta o novo penúltimo elemento
         elem->prev->next = elem;
     }
     return 0;

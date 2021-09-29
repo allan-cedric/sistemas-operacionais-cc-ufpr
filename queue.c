@@ -13,7 +13,7 @@ int queue_size(queue_t *queue)
 
     int size = 1; // Pelo menos tem 1 elemento
     queue_t *aux = queue;
-    while (queue != (aux = aux->next))
+    while ((aux = aux->next) != queue)
         size++;
     return size;
 }
@@ -32,7 +32,7 @@ void queue_print(char *name, queue_t *queue, void print_elem(void *))
     printf("[");
     print_elem(queue); // Pelo menos tem 1 elemento
     queue_t *aux = queue;
-    while (queue != (aux = aux->next))
+    while ((aux = aux->next) != queue)
     {
         printf(" ");
         print_elem(aux);
@@ -106,7 +106,7 @@ int queue_remove(queue_t **queue, queue_t *elem)
     }
     else if (!elem->prev || !elem->next)
     {
-        fprintf(stderr, "Error (queue_append): The element is not in any queue!\n");
+        fprintf(stderr, "Error (queue_remove): The element is not in any queue!\n");
         return -4;
     }
 
@@ -128,7 +128,7 @@ int queue_remove(queue_t **queue, queue_t *elem)
             elem->prev = NULL;
             return 0;
         }
-    } while (*queue != (aux = aux->next));
+    } while ((aux = aux->next) != *queue);
 
     fprintf(stderr, "Error (queue_remove): The element is not in this current queue!\n");
     return -5;

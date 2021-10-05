@@ -1,4 +1,9 @@
 .vscode/
 *.o
 testafila
+pingpong-tasks1
+pingpong-tasks2
+pingpong-tasks3
 *.out
+*.txt
+*.sol

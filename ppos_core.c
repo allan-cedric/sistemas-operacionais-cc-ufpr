@@ -73,22 +73,23 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
 
 void task_exit(int exitCode)
 {
-    if (current_task != &main_task)
-    {
+    if (current_task == &main_task)
+        exit(1);
+
 #ifdef DEBUG
-        fprintf(stdout, "PPOS (task_exit): Terminating task(%i)...\n", current_task->id);
+    fprintf(stdout, "PPOS (task_exit): Terminating task(%i)...\n", current_task->id);
 #endif
 
 #ifdef DEBUG
-        fprintf(stdout, "PPOS (task_exit): Task(%i) was terminated successfully!\n", current_task->id);
+    fprintf(stdout, "PPOS (task_exit): Task(%i) was terminated successfully!\n", current_task->id);
 #endif
 
-        task_switch(&main_task);
-    }
+    task_switch(&main_task);
 }
 
 int task_switch(task_t *task)
 {
+    
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_switch): Switching current task(%i) to task(%i)...\n", current_task->id, task->id);
 #endif

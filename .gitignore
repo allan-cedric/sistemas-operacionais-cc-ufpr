@@ -4,6 +4,7 @@ testafila
 pingpong-tasks1
 pingpong-tasks2
 pingpong-tasks3
+pingpong-dispatcher
 *.out
 *.txt
 *.sol

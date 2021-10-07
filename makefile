@@ -1,22 +1,26 @@
 CC = gcc
 CFLAGS = -Wall
 
-PROJECTS = p0 p1
+PROJECTS = p0 p2 p3
 
 # p0
 LIBOBJS_p0 = queue.o
 OBJS_p0 = testafila.o
 EXEC_p0 = testafila
 
-# p1
-LIBOBJS_p1 = ppos_core.o
-HEADERS_p1 = ppos.h ppos_data.h
-OBJS_p1_1 = pingpong-tasks1.o
-EXEC_p1_1 = pingpong-tasks1
-OBJS_p1_2 = pingpong-tasks2.o
-EXEC_p1_2 = pingpong-tasks2
-OBJS_p1_3 = pingpong-tasks3.o
-EXEC_p1_3 = pingpong-tasks3
+# p2
+LIBOBJS_p2 = ppos_core.o
+HEADERS_p2 = ppos.h ppos_data.h
+OBJS_p2_1 = pingpong-tasks1.o
+EXEC_p2_1 = pingpong-tasks1
+OBJS_p2_2 = pingpong-tasks2.o
+EXEC_p2_2 = pingpong-tasks2
+OBJS_p2_3 = pingpong-tasks3.o
+EXEC_p2_3 = pingpong-tasks3
+
+# p3
+OBJS_p3 = pingpong-dispatcher.o
+EXEC_p3 = pingpong-dispatcher
 
 
 all: $(PROJECTS)
@@ -26,26 +30,30 @@ flags:
 	$(eval CFLAGS += -DDEBUG)
 
 p0: $(EXEC_p0)
-p1: $(EXEC_p1_1) $(EXEC_p1_2) $(EXEC_p1_3)
+p2: $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3)
+p3: $(EXEC_p3)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
 $(LIBOBJS_p0) : %.o : %.c %.h
 $(OBJS_p0) : %.o : %.c
 
-# p1
-$(EXEC_p1_1): $(LIBOBJS_p0) $(LIBOBJS_p1) $(OBJS_p1_1)
-$(LIBOBJS_p1) : %.o : %.c $(HEADERS_p1)
-$(OBJS_p1_1) : %.o : %.c
+# p2
+$(EXEC_p2_1): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p2_1)
+$(LIBOBJS_p2) : %.o : %.c $(HEADERS_p2)
+$(OBJS_p2_1) : %.o : %.c
 
-$(EXEC_p1_2): $(LIBOBJS_p0) $(LIBOBJS_p1) $(OBJS_p1_2)
-$(OBJS_p1_2) : %.o : %.c
+$(EXEC_p2_2): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p2_2)
+$(OBJS_p2_2) : %.o : %.c
 
-$(EXEC_p1_3): $(LIBOBJS_p0) $(LIBOBJS_p1) $(OBJS_p1_3)
-$(OBJS_p1_3) : %.o : %.c
+$(EXEC_p2_3): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p2_3)
+$(OBJS_p2_3) : %.o : %.c
+
+$(EXEC_p3): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p3)
+$(OBJS_p3) : %.o : %.c
 
 clean:
 	rm -f *.o
 
 purge: clean
-	rm -f $(EXEC_p0) $(EXEC_p1_1) $(EXEC_p1_2) $(EXEC_p1_3) *.out
+	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) $(EXEC_p3) *.out

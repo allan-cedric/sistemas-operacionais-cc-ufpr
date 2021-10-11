@@ -5,6 +5,7 @@ pingpong-tasks1
 pingpong-tasks2
 pingpong-tasks3
 pingpong-dispatcher
+pingpong-scheduler
 *.out
 *.txt
 *.sol

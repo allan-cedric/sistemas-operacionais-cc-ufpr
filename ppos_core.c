@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_PRIOR -20
+#define MIN_PRIOR (-MAX_PRIOR)
+#define DEFAULT_PRIOR 0
+#define ALPHA -1
 #define MAIN_PID 0
 #define STACK_SIZE 64 * 1024
 
@@ -25,15 +29,47 @@ void free_task(task_t **task)
     (*task)->context.uc_stack.ss_size = 0;
 }
 
-task_t *scheduler()
-{
-    return user_tasks_queue; // Retorna a cabeça (Escalonador FCFS)
-}
-
 void print_task_id(void *elem)
 {
     task_t *task = (task_t *)elem;
-    printf("%i", task->id);
+    printf("%i:%i", task->id, task->dynam_prior);
+}
+
+task_t *scheduler()
+{
+    // Caso a fila de execução esteja vazia
+    if (!user_tasks_queue)
+        return NULL;
+
+    int max_prior = user_tasks_queue->dynam_prior;
+    task_t *cur = user_tasks_queue, *choosen_task = cur;
+
+    // Varre toda a fila de execução
+    while ((cur = cur->next) != user_tasks_queue)
+    {
+        // Prioridade em escala negativa
+        if (cur->dynam_prior < max_prior)
+        {
+            // Envelhece a tarefa escolhida anteriormente
+            if (choosen_task->dynam_prior > MAX_PRIOR)
+                choosen_task->dynam_prior += ALPHA;
+
+            // Atualiza para uma nova tarefa
+            max_prior = cur->dynam_prior;
+            choosen_task = cur;
+        }
+        else if (cur->dynam_prior > MAX_PRIOR)
+            cur->dynam_prior += ALPHA;
+    }
+    choosen_task->dynam_prior = choosen_task->static_prior;
+
+#ifdef DEBUG
+    fprintf(stdout, "PPOS (scheduler): task %i choosen!\n", choosen_task->id);
+    queue_print("PPOS (scheduler): Ready user's tasks ->", (queue_t *)user_tasks_queue, print_task_id);
+#endif
+
+    return choosen_task;
+    // return user_tasks_queue; // Retorna a cabeça (Escalonador FCFS)
 }
 
 void dispatcher_proc(void *arg)
@@ -41,7 +77,7 @@ void dispatcher_proc(void *arg)
     while (num_user_tasks)
     {
 #ifdef DEBUG
-        queue_print("Ready user's tasks: ", (queue_t *)user_tasks_queue, print_task_id);
+        queue_print("PPOS (dispatcher): Ready user's tasks ->", (queue_t *)user_tasks_queue, print_task_id);
 #endif
         task_t *next_task = scheduler();
 
@@ -79,6 +115,8 @@ void ppos_init()
     main_task.next = NULL;
     main_task.id = MAIN_PID;
     main_task.state = READY;
+    main_task.static_prior = MAX_PRIOR;
+    main_task.dynam_prior = MAX_PRIOR;
 
     // Inicialização da tarefa atual
     current_task = &main_task;
@@ -107,6 +145,8 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
     task->next = NULL;
     task->id = ++pid;
     task->state = READY;
+    task->static_prior = DEFAULT_PRIOR;
+    task->dynam_prior = DEFAULT_PRIOR;
     getcontext(&task->context); // Salva um contexto genérico
 
     // Inicialização da stack
@@ -156,7 +196,7 @@ void task_exit(int exitCode)
     case 1: // Despachante
         task_switch(&main_task);
         break;
-    default: // Tarefa genérico do usuário
+    default: // Tarefa genérica do usuário
         task_switch(&dispatcher);
         break;
     }
@@ -187,9 +227,22 @@ int task_id()
 void task_yield()
 {
 #ifdef DEBUG
-    fprintf(stdout, "PPOS: task %i yields the CPU!\n", task_id());
+    fprintf(stdout, "PPOS (task_yield): task %i yields the CPU!\n", task_id());
 #endif
     if (user_tasks_queue && task_id() > 1)
         user_tasks_queue = user_tasks_queue->next;
     task_switch(&dispatcher);
+}
+
+void task_setprio (task_t *task, int prio)
+{
+    if(task)
+        task->static_prior = prio;
+    else
+        current_task->static_prior = prio;
+}
+
+int task_getprio (task_t *task)
+{
+    return (task ? task->static_prior : current_task->static_prior);
 }

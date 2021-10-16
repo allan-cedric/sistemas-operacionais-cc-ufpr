@@ -67,4 +67,4 @@ clean:
 	rm -f *.o
 
 purge: clean
-	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) $(EXEC_p3) *.out
+	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) $(EXEC_p3) $(EXEC_p4) *.out

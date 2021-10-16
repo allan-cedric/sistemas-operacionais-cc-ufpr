@@ -1,3 +1,5 @@
+// Allan Cedric G. B. Alves da Silva - GRR20190351
+
 // PingPongOS - PingPong Operating System
 // Prof. Carlos A. Maziero, DINF UFPR
 // Versão 1.1 -- Julho de 2016
@@ -17,8 +19,8 @@ typedef struct task_t
    int id ;				// identificador da tarefa
    ucontext_t context ;			// contexto armazenado da tarefa
    int state ;    // Estado da tarefa
-   int static_prior ; // Prioridade estática
-   int dynam_prior ; // Prioridade dinâmica
+   int static_prio ; // Prioridade estática
+   int dynam_prio ; // Prioridade dinâmica
    // ... (outros campos serão adicionados mais tarde)
 } task_t ;
 

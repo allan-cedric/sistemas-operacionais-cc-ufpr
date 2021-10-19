@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
 
-PROJECTS = p0 p2 p3 p4
+PROJECTS = p0 p2 p3 p4 p5
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -26,6 +26,10 @@ EXEC_p3 = pingpong-dispatcher
 OBJS_p4 = pingpong-scheduler.o
 EXEC_p4 = pingpong-scheduler
 
+# p5
+OBJS_p5 = pingpong-preempcao.o
+EXEC_p5 = pingpong-preempcao
+
 
 all: $(PROJECTS)
 
@@ -37,6 +41,7 @@ p0: $(EXEC_p0)
 p2: $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3)
 p3: $(EXEC_p3)
 p4: $(EXEC_p4)
+p5: $(EXEC_p5)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -62,9 +67,13 @@ $(OBJS_p3) : %.o : %.c
 $(EXEC_p4): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p4)
 $(OBJS_p4) : %.o : %.c
 
+# p5
+$(EXEC_p5): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p5)
+$(OBJS_p5) : %.o : %.c
 
 clean:
 	rm -f *.o
 
 purge: clean
-	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) $(EXEC_p3) $(EXEC_p4) *.out
+	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
+	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5) *.out

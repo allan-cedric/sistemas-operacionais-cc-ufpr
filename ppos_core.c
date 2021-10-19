@@ -5,6 +5,8 @@
 #include "ppos.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
 
 // --- Macros ---
 #define MAX_PRIO -20
@@ -12,6 +14,7 @@
 #define DEFAULT_PRIO 0
 #define ALPHA -1
 
+#define DEFAULT_QUANTUM_TICKS 20
 #define MAIN_PID 0
 #define STACK_SIZE (64 * 1024)
 
@@ -26,8 +29,13 @@ typedef enum task_states_t
 
 // --- Variáveis globais do sistema ---
 int pid = 0, num_user_tasks = 0;
+int counter_ticks;
+
 task_t main_task, dispatcher, *current_task;
 task_t *user_tasks_queue;
+
+struct sigaction preemption;
+struct itimerval timer;
 
 /*!
     @brief  Libera memória de uma tarefa.
@@ -115,6 +123,7 @@ void dispatcher_proc(void *arg)
 
         if (next_task)
         {
+            counter_ticks = next_task->quantum_ticks;
             task_switch(next_task);
 
             // Tratamento de estados da tarefa (#TODO)
@@ -133,12 +142,43 @@ void dispatcher_proc(void *arg)
     task_exit(0);
 }
 
+void task_preemption()
+{
+    // Caso seja uma tarefa de usuário, trata da preempção
+    if (task_id() > 1)
+    {
+        if (!(--counter_ticks))
+            task_switch(&dispatcher);
+    }
+}
+
 void ppos_init()
 {
 
 #ifdef DEBUG
     fprintf(stdout, "PPOS (ppos_init): OS initialization...\n");
 #endif
+
+    // Define a rotina de tratamento de preempção de tarefas
+    preemption.sa_handler = task_preemption;
+    sigemptyset(&preemption.sa_mask);
+    preemption.sa_flags = 0;
+    if (sigaction(SIGALRM, &preemption, 0) < 0)
+    {
+        fprintf(stderr, "Error (ppos_init): Failed to set a SIGALRM interrupt!\n");
+        exit(1);
+    }
+
+    // Define o temporizador para interrupções
+    timer.it_value.tv_usec = 0;
+    timer.it_value.tv_sec = 1;
+    timer.it_interval.tv_usec = 1000;
+    timer.it_interval.tv_sec = 0;
+    if (setitimer(ITIMER_REAL, &timer, 0) < 0)
+    {
+        fprintf(stderr, "Error (ppos_init): Failed to set a timer!\n");
+        exit(1);
+    }
 
     // Desativa buffer da stdout
     setvbuf(stdout, 0, _IONBF, 0);
@@ -186,6 +226,7 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
     task->state = READY;
     task->static_prio = DEFAULT_PRIO;
     task->dynam_prio = DEFAULT_PRIO;
+    task->quantum_ticks = DEFAULT_QUANTUM_TICKS;
     getcontext(&task->context); // Salva o contexto atual
 
     // Inicialização da stack

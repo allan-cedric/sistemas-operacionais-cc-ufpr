@@ -21,6 +21,7 @@ typedef struct task_t
    int state ;    // Estado da tarefa
    int static_prio ; // Prioridade estática
    int dynam_prio ; // Prioridade dinâmica
+   int quantum_ticks ; // Quantum em ticks da tarefa
    // ... (outros campos serão adicionados mais tarde)
 } task_t ;
 

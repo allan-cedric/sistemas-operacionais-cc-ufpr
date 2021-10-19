@@ -159,27 +159,6 @@ void ppos_init()
     fprintf(stdout, "PPOS (ppos_init): OS initialization...\n");
 #endif
 
-    // Define a rotina de tratamento de preempção de tarefas
-    preemption.sa_handler = task_preemption;
-    sigemptyset(&preemption.sa_mask);
-    preemption.sa_flags = 0;
-    if (sigaction(SIGALRM, &preemption, 0) < 0)
-    {
-        fprintf(stderr, "Error (ppos_init): Failed to set a SIGALRM interrupt!\n");
-        exit(1);
-    }
-
-    // Define o temporizador para interrupções
-    timer.it_value.tv_usec = 0;
-    timer.it_value.tv_sec = 1;
-    timer.it_interval.tv_usec = 1000;
-    timer.it_interval.tv_sec = 0;
-    if (setitimer(ITIMER_REAL, &timer, 0) < 0)
-    {
-        fprintf(stderr, "Error (ppos_init): Failed to set a timer!\n");
-        exit(1);
-    }
-
     // Desativa buffer da stdout
     setvbuf(stdout, 0, _IONBF, 0);
 
@@ -203,6 +182,27 @@ void ppos_init()
 
     // Criando despachante
     task_create(&dispatcher, dispatcher_proc, NULL);
+
+    // Define a rotina de tratamento de preempção de tarefas
+    preemption.sa_handler = task_preemption;
+    sigemptyset(&preemption.sa_mask);
+    preemption.sa_flags = 0;
+    if (sigaction(SIGALRM, &preemption, 0) < 0)
+    {
+        fprintf(stderr, "Error (ppos_init): Failed to set a SIGALRM interrupt!\n");
+        exit(1);
+    }
+
+    // Define o temporizador para interrupções
+    timer.it_value.tv_usec = 1000;
+    timer.it_value.tv_sec = 0;
+    timer.it_interval.tv_usec = 1000;
+    timer.it_interval.tv_sec = 0;
+    if (setitimer(ITIMER_REAL, &timer, 0) < 0)
+    {
+        fprintf(stderr, "Error (ppos_init): Failed to set a timer!\n");
+        exit(1);
+    }
 
 #ifdef DEBUG
     fprintf(stdout, "PPOS (ppos_init): PingPongOS was initialized successfully!\n\n");

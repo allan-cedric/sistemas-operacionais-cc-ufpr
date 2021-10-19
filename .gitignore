@@ -6,6 +6,7 @@ pingpong-tasks2
 pingpong-tasks3
 pingpong-dispatcher
 pingpong-scheduler
+pingpong-preempcao
 *.out
 *.txt
 *.sol

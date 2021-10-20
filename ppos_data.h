@@ -25,6 +25,8 @@ typedef struct task_t
    unsigned int born_timestamp ; // Tempo/Momento de nascimento
    unsigned int cpu_time ; // Tempo total de uso da CPU
    unsigned int cpu_activations ; // Ativações na CPU
+   struct task_t *waiting_tasks ; // Fila de tarefas em espera
+   int exit_code ; // Código de encerramento
    // ... (outros campos serão adicionados mais tarde)
 } task_t ;
 

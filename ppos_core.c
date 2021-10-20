@@ -14,7 +14,7 @@
 #define DEFAULT_PRIO 0
 #define ALPHA -1
 
-#define DEFAULT_QUANTUM_TICKS 20
+#define DEFAULT_QUANTUM_TICKS 10
 #define MAIN_PID 0
 #define STACK_SIZE (64 * 1024)
 
@@ -24,13 +24,14 @@ typedef enum task_states_t
 {
     TERM,
     READY,
-    SUSPENSE
+    SUSPENDED
 } task_states_t;
 
 // --- Variáveis globais do sistema ---
 int pid = 0, num_user_tasks = 0;
 int counter_ticks;
 unsigned int system_clock = 0;
+int lock_kernel;
 
 task_t main_task, dispatcher, *current_task;
 task_t *user_tasks_queue = NULL;
@@ -108,7 +109,6 @@ task_t *scheduler()
 */
 void dispatcher_proc(void *arg)
 {
-
 #ifdef DEBUG
     fprintf(stdout, "PPOS (dispatcher): Dispatcher was launched!\n");
 #endif
@@ -130,6 +130,7 @@ void dispatcher_proc(void *arg)
             task_switch(next_task);
             next_task->cpu_time += (systime() - init_cpu_time);
 
+            task_t *aux = next_task->waiting_tasks;
             // Tratamento de estados da tarefa (#TODO)
             switch (next_task->state)
             {
@@ -140,6 +141,16 @@ void dispatcher_proc(void *arg)
                     systime() - next_task->born_timestamp,
                     next_task->cpu_time,
                     next_task->cpu_activations);
+
+                // Restaura as tarefas em espera
+                while (aux)
+                {
+                    aux->state = READY;
+                    queue_remove((queue_t **)&next_task->waiting_tasks, (queue_t *)aux);
+                    queue_append((queue_t **)&user_tasks_queue, (queue_t *)aux);
+                    aux = next_task->waiting_tasks;
+                }
+
                 queue_remove((queue_t **)&user_tasks_queue, (queue_t *)next_task);
                 free_task(&next_task);
                 num_user_tasks--;
@@ -159,8 +170,8 @@ void task_preemption()
 {
     system_clock++;
 
-    // Caso seja uma tarefa de usuário, trata da preempção
-    if (task_id() != 1)
+    // Caso seja uma tarefa de usuário e não seja uma rotina de kernel, trata da preempção
+    if ((task_id() != 1) && !lock_kernel)
     {
         if (!(--counter_ticks))
             task_switch(&dispatcher);
@@ -169,6 +180,8 @@ void task_preemption()
 
 void ppos_init()
 {
+    lock_kernel = 1;
+
     // Desativa buffer da stdout
     setvbuf(stdout, 0, _IONBF, 0);
 
@@ -188,6 +201,8 @@ void ppos_init()
     main_task.static_prio = DEFAULT_PRIO;
     main_task.dynam_prio = DEFAULT_PRIO;
     main_task.quantum_ticks = DEFAULT_QUANTUM_TICKS;
+    main_task.waiting_tasks = NULL;
+    main_task.exit_code = 0;
 
     // Inicialização da tarefa atual
     current_task = &main_task;
@@ -232,10 +247,13 @@ void ppos_init()
 #endif
 
     task_switch(&dispatcher);
+    lock_kernel = 0;
 }
 
 int task_create(task_t *task, void (*start_func)(void *), void *arg)
 {
+    lock_kernel = 1;
+
     if (!task)
     {
         fprintf(stderr, "Error (task_create): There is no task structure!\n");
@@ -253,6 +271,8 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
     task->static_prio = DEFAULT_PRIO;
     task->dynam_prio = DEFAULT_PRIO;
     task->quantum_ticks = DEFAULT_QUANTUM_TICKS;
+    task->waiting_tasks = NULL;
+    task->exit_code = 0;
     getcontext(&task->context); // Salva o contexto atual
 
     // Inicialização da stack
@@ -283,17 +303,20 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
         num_user_tasks++;
     }
 
+    lock_kernel = 0;
     return task->id;
 }
 
 void task_exit(int exitCode)
 {
+    lock_kernel = 1;
 
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_exit): task %i is terminating...\n", task_id());
 #endif
 
     current_task->state = TERM;
+    current_task->exit_code = exitCode;
 
     switch (task_id())
     {
@@ -310,11 +333,13 @@ void task_exit(int exitCode)
         task_switch(&dispatcher);
         break;
     }
+
+    lock_kernel = 0;
 }
 
 int task_switch(task_t *task)
 {
-
+    lock_kernel = 1;
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_switch): current task %i to task %i...\n", task_id(), task->id);
 #endif
@@ -323,6 +348,7 @@ int task_switch(task_t *task)
     current_task = task;
 
     task->cpu_activations++;
+    lock_kernel = 0;
     if (swapcontext(&aux->context, &task->context) < 0)
     {
         fprintf(stderr, "Error (task_switch): Unable to switch the context!\n");
@@ -338,16 +364,18 @@ int task_id()
 
 void task_yield()
 {
-
+    lock_kernel = 1;
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_yield): task %i yields the CPU!\n", task_id());
 #endif
 
     task_switch(&dispatcher);
+    lock_kernel = 0;
 }
 
 void task_setprio(task_t *task, int prio)
 {
+    lock_kernel = 1;
     if (task)
     {
         task->static_prio = prio;
@@ -358,11 +386,38 @@ void task_setprio(task_t *task, int prio)
         current_task->static_prio = prio;
         current_task->dynam_prio = prio;
     }
+    lock_kernel = 0;
 }
 
 int task_getprio(task_t *task)
 {
     return (task ? task->static_prio : current_task->static_prio);
+}
+
+int task_join(task_t *task)
+{
+    lock_kernel = 1;
+    if (!user_tasks_queue || !task)
+    {
+        lock_kernel = 0;
+        return -1;
+    }
+
+    task_t *cur = user_tasks_queue;
+    do
+    {
+        if (cur == task)
+        {
+            current_task->state = SUSPENDED;
+            queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);
+            queue_append((queue_t **)&task->waiting_tasks, (queue_t *)current_task);
+            task_switch(&dispatcher);
+            lock_kernel = 0;
+            return task->exit_code;
+        }
+    } while ((cur = cur->next) != user_tasks_queue);
+    lock_kernel = 0;
+    return -1;
 }
 
 unsigned int systime()

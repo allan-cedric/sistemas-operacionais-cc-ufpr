@@ -33,7 +33,7 @@ int counter_ticks;
 unsigned int system_clock = 0;
 
 task_t main_task, dispatcher, *current_task;
-task_t *user_tasks_queue;
+task_t *user_tasks_queue = NULL;
 
 struct sigaction preemption;
 struct itimerval timer;
@@ -152,12 +152,15 @@ void dispatcher_proc(void *arg)
     task_exit(0);
 }
 
+/*!
+    @brief  Rotina de tratamento de interrupção: Preempção de tarefas
+*/
 void task_preemption()
 {
     system_clock++;
 
     // Caso seja uma tarefa de usuário, trata da preempção
-    if (task_id() > 1)
+    if (task_id() != 1)
     {
         if (!(--counter_ticks))
             task_switch(&dispatcher);
@@ -166,21 +169,25 @@ void task_preemption()
 
 void ppos_init()
 {
+    // Desativa buffer da stdout
+    setvbuf(stdout, 0, _IONBF, 0);
 
 #ifdef DEBUG
     fprintf(stdout, "PPOS (ppos_init): OS initialization...\n");
 #endif
 
-    // Desativa buffer da stdout
-    setvbuf(stdout, 0, _IONBF, 0);
-
     // Inicialização da tarefa main
+    main_task.born_timestamp = systime();
+    main_task.cpu_time = 0;
+    main_task.cpu_activations = 0;
+
     main_task.prev = NULL;
     main_task.next = NULL;
     main_task.id = MAIN_PID;
     main_task.state = READY;
-    main_task.static_prio = MAX_PRIO;
-    main_task.dynam_prio = MAX_PRIO;
+    main_task.static_prio = DEFAULT_PRIO;
+    main_task.dynam_prio = DEFAULT_PRIO;
+    main_task.quantum_ticks = DEFAULT_QUANTUM_TICKS;
 
     // Inicialização da tarefa atual
     current_task = &main_task;
@@ -189,8 +196,8 @@ void ppos_init()
     fprintf(stdout, "PPOS (ppos_init): task %i (%p) was created successfully!\n", task_id(), &main_task);
 #endif
 
-    // Inicialização da fila de execução (usuário)
-    user_tasks_queue = NULL;
+    // Adiciona a tarefa main na fila de tarefas prontas do usuário
+    queue_append((queue_t **)&user_tasks_queue, (queue_t *)&main_task);
 
     // Criando despachante
     task_create(&dispatcher, dispatcher_proc, NULL);
@@ -222,6 +229,8 @@ void ppos_init()
     fprintf(stdout, " *** Welcome to PingPongOS! ***\n");
     fprintf(stdout, " ******************************\n\n");
 #endif
+
+    task_switch(&dispatcher);
 }
 
 int task_create(task_t *task, void (*start_func)(void *), void *arg)
@@ -262,17 +271,13 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
 
     makecontext(&task->context, (void *)start_func, 1, arg); // Ajusta o contexto da tarefa
 
-    // Caso não seja o despachante,
-    // adiciona a tarefa na fila de tarefas prontas do usuário.
-    if (task->id > 1)
-    {
-        queue_append((queue_t **)&user_tasks_queue, (queue_t *)task);
-        num_user_tasks++;
-    }
-
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_create): task %i (%p) was created successfully!\n", task->id, task);
 #endif
+
+    // Adiciona a tarefa na fila de tarefas prontas do usuário.
+    queue_append((queue_t **)&user_tasks_queue, (queue_t *)task);
+    num_user_tasks++;
 
     return task->id;
 }
@@ -288,8 +293,6 @@ void task_exit(int exitCode)
 
     switch (task_id())
     {
-    case 0: // Main
-        exit(1);
     case 1: // Despachante
         fprintf(
             stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
@@ -297,7 +300,7 @@ void task_exit(int exitCode)
             systime() - current_task->born_timestamp,
             current_task->cpu_time,
             current_task->cpu_activations);
-        task_switch(&main_task);
+        exit(0);
         break;
     default: // Tarefa genérica do usuário
         task_switch(&dispatcher);

@@ -22,6 +22,9 @@ typedef struct task_t
    int static_prio ; // Prioridade estática
    int dynam_prio ; // Prioridade dinâmica
    int quantum_ticks ; // Quantum em ticks da tarefa
+   unsigned int born_timestamp ; // Tempo/Momento de nascimento
+   unsigned int cpu_time ; // Tempo total de uso da CPU
+   unsigned int cpu_activations ; // Ativações na CPU
    // ... (outros campos serão adicionados mais tarde)
 } task_t ;
 

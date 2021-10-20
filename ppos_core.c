@@ -30,6 +30,7 @@ typedef enum task_states_t
 // --- Variáveis globais do sistema ---
 int pid = 0, num_user_tasks = 0;
 int counter_ticks;
+unsigned int system_clock = 0;
 
 task_t main_task, dispatcher, *current_task;
 task_t *user_tasks_queue;
@@ -124,12 +125,21 @@ void dispatcher_proc(void *arg)
         if (next_task)
         {
             counter_ticks = next_task->quantum_ticks;
+
+            unsigned int init_cpu_time = systime();
             task_switch(next_task);
+            next_task->cpu_time += (systime() - init_cpu_time);
 
             // Tratamento de estados da tarefa (#TODO)
             switch (next_task->state)
             {
             case TERM:
+                fprintf(
+                    stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
+                    next_task->id,
+                    systime() - next_task->born_timestamp,
+                    next_task->cpu_time,
+                    next_task->cpu_activations);
                 queue_remove((queue_t **)&user_tasks_queue, (queue_t *)next_task);
                 free_task(&next_task);
                 num_user_tasks--;
@@ -144,6 +154,8 @@ void dispatcher_proc(void *arg)
 
 void task_preemption()
 {
+    system_clock++;
+
     // Caso seja uma tarefa de usuário, trata da preempção
     if (task_id() > 1)
     {
@@ -220,6 +232,10 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
         return -1;
     }
 
+    task->born_timestamp = systime();
+    task->cpu_time = 0;
+    task->cpu_activations = 0;
+
     task->prev = NULL;
     task->next = NULL;
     task->id = ++pid;
@@ -275,6 +291,12 @@ void task_exit(int exitCode)
     case 0: // Main
         exit(1);
     case 1: // Despachante
+        fprintf(
+            stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
+            task_id(),
+            systime() - current_task->born_timestamp,
+            current_task->cpu_time,
+            current_task->cpu_activations);
         task_switch(&main_task);
         break;
     default: // Tarefa genérica do usuário
@@ -292,6 +314,8 @@ int task_switch(task_t *task)
 
     task_t *aux = current_task;
     current_task = task;
+
+    task->cpu_activations++;
     if (swapcontext(&aux->context, &task->context) < 0)
     {
         fprintf(stderr, "Error (task_switch): Unable to switch the context!\n");
@@ -332,4 +356,9 @@ void task_setprio(task_t *task, int prio)
 int task_getprio(task_t *task)
 {
     return (task ? task->static_prio : current_task->static_prio);
+}
+
+unsigned int systime()
+{
+    return system_clock;
 }

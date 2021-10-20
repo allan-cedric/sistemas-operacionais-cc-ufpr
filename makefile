@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
 
-PROJECTS = p0 p2 p3 p4 p5
+PROJECTS = p0 p2 p3 p4 p5 p6
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -32,6 +32,12 @@ EXEC_p5_1 = pingpong-preempcao
 OBJS_p5_2 = pingpong-preempcao-stress.o
 EXEC_p5_2 = pingpong-preempcao-stress
 
+# p6
+OBJS_p6_1 = pingpong-contab.o
+EXEC_p6_1 = pingpong-contab
+OBJS_p6_2 = pingpong-contab-prio.o
+EXEC_p6_2 = pingpong-contab-prio
+
 
 all: $(PROJECTS)
 
@@ -44,6 +50,7 @@ p2: $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3)
 p3: $(EXEC_p3)
 p4: $(EXEC_p4)
 p5: $(EXEC_p5_1) $(EXEC_p5_2)
+p6: $(EXEC_p6_1) $(EXEC_p6_2)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -76,9 +83,16 @@ $(OBJS_p5_1) : %.o : %.c
 $(EXEC_p5_2): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p5_2)
 $(OBJS_p5_2) : %.o : %.c
 
+# p6
+$(EXEC_p6_1): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p6_1)
+$(OBJS_p6_1) : %.o : %.c
+
+$(EXEC_p6_2): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p6_2)
+$(OBJS_p6_2) : %.o : %.c
+
 clean:
 	rm -f *.o
 
 purge: clean
 	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
-	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) *.out
+	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) $(EXEC_p6_1) $(EXEC_p6_2)*.out

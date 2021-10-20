@@ -8,6 +8,8 @@ pingpong-dispatcher
 pingpong-scheduler
 pingpong-preempcao
 pingpong-preempcao-stress
+pingpong-contab
+pingpong-contab-prio
 *.out
 *.txt
 *.sol

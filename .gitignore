@@ -10,6 +10,7 @@ pingpong-preempcao
 pingpong-preempcao-stress
 pingpong-contab
 pingpong-contab-prio
+pingpong-maintask
 *.out
 *.txt
 *.sol

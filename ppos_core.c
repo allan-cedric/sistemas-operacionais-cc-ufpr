@@ -276,8 +276,11 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg)
 #endif
 
     // Adiciona a tarefa na fila de tarefas prontas do usuário.
-    queue_append((queue_t **)&user_tasks_queue, (queue_t *)task);
-    num_user_tasks++;
+    if (task->id != 1)
+    {
+        queue_append((queue_t **)&user_tasks_queue, (queue_t *)task);
+        num_user_tasks++;
+    }
 
     return task->id;
 }

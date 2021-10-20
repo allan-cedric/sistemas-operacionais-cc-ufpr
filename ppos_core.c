@@ -198,6 +198,7 @@ void ppos_init()
 
     // Adiciona a tarefa main na fila de tarefas prontas do usuário
     queue_append((queue_t **)&user_tasks_queue, (queue_t *)&main_task);
+    num_user_tasks++;
 
     // Criando despachante
     task_create(&dispatcher, dispatcher_proc, NULL);

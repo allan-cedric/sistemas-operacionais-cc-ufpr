@@ -327,7 +327,7 @@ void task_exit(int exitCode)
             systime() - current_task->born_timestamp,
             current_task->cpu_time,
             current_task->cpu_activations);
-        exit(0);
+        exit(current_task->exit_code);
         break;
     default: // Tarefa genérica do usuário
         task_switch(&dispatcher);
@@ -397,27 +397,18 @@ int task_getprio(task_t *task)
 int task_join(task_t *task)
 {
     lock_kernel = 1;
-    if (!user_tasks_queue || !task)
+    if (!task || task->state == TERM)
     {
         lock_kernel = 0;
         return -1;
     }
 
-    task_t *cur = user_tasks_queue;
-    do
-    {
-        if (cur == task)
-        {
-            current_task->state = SUSPENDED;
-            queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);
-            queue_append((queue_t **)&task->waiting_tasks, (queue_t *)current_task);
-            task_switch(&dispatcher);
-            lock_kernel = 0;
-            return task->exit_code;
-        }
-    } while ((cur = cur->next) != user_tasks_queue);
+    current_task->state = SUSPENDED;
+    queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);
+    queue_append((queue_t **)&task->waiting_tasks, (queue_t *)current_task);
+    task_switch(&dispatcher);
     lock_kernel = 0;
-    return -1;
+    return task->exit_code;
 }
 
 unsigned int systime()

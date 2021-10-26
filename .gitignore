@@ -12,6 +12,7 @@ pingpong-contab
 pingpong-contab-prio
 pingpong-maintask
 pingpong-join
+pingpong-sleep
 *.out
 *.txt
 *.sol

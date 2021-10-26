@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
 
-PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8
+PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -46,6 +46,10 @@ EXEC_p7 = pingpong-maintask
 OBJS_p8 = pingpong-join.o
 EXEC_p8 = pingpong-join
 
+# p9
+OBJS_p9 = pingpong-sleep.o
+EXEC_p9 = pingpong-sleep
+
 
 all: $(PROJECTS)
 
@@ -61,6 +65,7 @@ p5: $(EXEC_p5_1) $(EXEC_p5_2)
 p6: $(EXEC_p6_1) $(EXEC_p6_2)
 p7: $(EXEC_p7)
 p8: $(EXEC_p8)
+p9: $(EXEC_p9)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -108,10 +113,14 @@ $(OBJS_p7) : %.o : %.c
 $(EXEC_p8): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p8)
 $(OBJS_p8) : %.o : %.c
 
+# p9
+$(EXEC_p9): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p9)
+$(OBJS_p9) : %.o : %.c
+
 clean:
 	rm -f *.o
 
 purge: clean
 	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
 	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) $(EXEC_p6_1) \
-	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) *.out
+	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) $(EXEC_p9) *.out

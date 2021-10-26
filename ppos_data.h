@@ -27,6 +27,7 @@ typedef struct task_t
    unsigned int cpu_activations ; // Ativações na CPU
    struct task_t *waiting_tasks ; // Fila de tarefas em espera
    int exit_code ; // Código de encerramento
+   unsigned int wake_time ; // Tempo para acordar
    // ... (outros campos serão adicionados mais tarde)
 } task_t ;
 

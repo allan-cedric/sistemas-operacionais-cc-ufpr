@@ -34,7 +34,7 @@ unsigned int system_clock = 0;
 int lock_kernel;
 
 task_t main_task, dispatcher, *current_task;
-task_t *user_tasks_queue = NULL;
+task_t *user_tasks_queue = NULL, *sleeping_tasks_queue = NULL;
 
 struct sigaction preemption;
 struct itimerval timer;
@@ -104,16 +104,59 @@ task_t *scheduler()
     return choosen_task;
 }
 
+void terminate_task(task_t *task)
+{
+    fprintf(
+        stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
+        task->id,
+        systime() - task->born_timestamp,
+        task->cpu_time,
+        task->cpu_activations);
+
+    // Restaura as tarefas em espera
+    task_t *cur = task->waiting_tasks;
+    while (cur)
+    {
+        cur->state = READY;
+        queue_remove((queue_t **)&task->waiting_tasks, (queue_t *)cur);
+        queue_append((queue_t **)&user_tasks_queue, (queue_t *)cur);
+        cur = task->waiting_tasks;
+    }
+
+    queue_remove((queue_t **)&user_tasks_queue, (queue_t *)task);
+    free_task(&task);
+    num_user_tasks--;
+}
+
+void wake_tasks()
+{
+    int size = queue_size((queue_t *)sleeping_tasks_queue);
+    task_t *cur = sleeping_tasks_queue;
+    while (size--)
+    {
+        task_t *next = cur->next;
+        if (systime() >= cur->wake_time)
+        {
+            cur->state = READY;
+            queue_remove((queue_t **)&sleeping_tasks_queue, (queue_t *)cur);
+            queue_append((queue_t **)&user_tasks_queue, (queue_t *)cur);
+        }
+        cur = next;
+    }
+}
+
 /*!
     @brief  Rotina do despachante de tarefas.
 */
 void dispatcher_proc(void *arg)
 {
+    dispatcher.cpu_time = systime(); // Marca o tempo inicial
+
 #ifdef DEBUG
     fprintf(stdout, "PPOS (dispatcher): Dispatcher was launched!\n");
 #endif
 
-    while (user_tasks_queue)
+    while (num_user_tasks)
     {
 
 #ifdef DEBUG
@@ -130,35 +173,19 @@ void dispatcher_proc(void *arg)
             task_switch(next_task);
             next_task->cpu_time += (systime() - init_cpu_time);
 
-            task_t *aux = next_task->waiting_tasks;
-            // Tratamento de estados da tarefa (#TODO)
+            // Tratamento de estados da tarefa
             switch (next_task->state)
             {
             case TERM:
-                fprintf(
-                    stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
-                    next_task->id,
-                    systime() - next_task->born_timestamp,
-                    next_task->cpu_time,
-                    next_task->cpu_activations);
-
-                // Restaura as tarefas em espera
-                while (aux)
-                {
-                    aux->state = READY;
-                    queue_remove((queue_t **)&next_task->waiting_tasks, (queue_t *)aux);
-                    queue_append((queue_t **)&user_tasks_queue, (queue_t *)aux);
-                    aux = next_task->waiting_tasks;
-                }
-
-                queue_remove((queue_t **)&user_tasks_queue, (queue_t *)next_task);
-                free_task(&next_task);
-                num_user_tasks--;
+                terminate_task(next_task);
                 break;
             default:
                 break;
             }
         }
+
+        // Restaura tarefas dormindo
+        wake_tasks();
     }
     task_exit(0);
 }
@@ -321,6 +348,7 @@ void task_exit(int exitCode)
     switch (task_id())
     {
     case 1: // Despachante
+        current_task->cpu_time = systime() - current_task->cpu_time;
         fprintf(
             stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
             task_id(),
@@ -340,9 +368,9 @@ void task_exit(int exitCode)
 int task_switch(task_t *task)
 {
     lock_kernel = 1;
-#ifdef DEBUG
-    fprintf(stdout, "PPOS (task_switch): current task %i to task %i...\n", task_id(), task->id);
-#endif
+    // #ifdef DEBUG
+    //     fprintf(stdout, "PPOS (task_switch): current task %i to task %i...\n", task_id(), task->id);
+    // #endif
 
     task_t *aux = current_task;
     current_task = task;
@@ -409,6 +437,17 @@ int task_join(task_t *task)
     task_switch(&dispatcher);
     lock_kernel = 0;
     return task->exit_code;
+}
+
+void task_sleep(int t)
+{
+    lock_kernel = 1;
+    current_task->wake_time = systime() + (unsigned int)t;
+    current_task->state = SUSPENDED;
+    queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);
+    queue_append((queue_t **)&sleeping_tasks_queue, (queue_t *)current_task);
+    task_switch(&dispatcher);
+    lock_kernel = 0;
 }
 
 unsigned int systime()

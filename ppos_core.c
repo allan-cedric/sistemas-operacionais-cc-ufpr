@@ -3,29 +3,6 @@
 // Allan Cedric G. B. Alves da Silva - GRR20190351
 
 #include "ppos.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/time.h>
-
-// --- Macros ---
-#define MAX_PRIO -20
-#define MIN_PRIO (-MAX_PRIO)
-#define DEFAULT_PRIO 0
-#define ALPHA -1
-
-#define DEFAULT_QUANTUM_TICKS 10
-#define MAIN_PID 0
-#define STACK_SIZE (64 * 1024)
-
-// --- Definições de tipos convenientes ---
-typedef char byte_t;
-typedef enum task_states_t
-{
-    TERM,
-    READY,
-    SUSPENDED
-} task_states_t;
 
 // --- Variáveis globais do sistema ---
 int pid = 0, num_user_tasks = 0;

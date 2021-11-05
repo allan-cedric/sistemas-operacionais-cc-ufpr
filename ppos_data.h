@@ -11,6 +11,29 @@
 
 #include <ucontext.h>		// biblioteca POSIX de trocas de contexto
 #include "queue.h"		// biblioteca de filas genéricas
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
+
+// --- Macros ---
+#define MAX_PRIO -20
+#define MIN_PRIO (-MAX_PRIO)
+#define DEFAULT_PRIO 0
+#define ALPHA -1
+
+#define DEFAULT_QUANTUM_TICKS 10
+#define MAIN_PID 0
+#define STACK_SIZE (64 * 1024)
+
+// --- Definições de tipos convenientes ---
+typedef char byte_t;
+typedef enum task_states_t
+{
+    TERM,
+    READY,
+    SUSPENDED
+} task_states_t;
 
 // Estrutura que define um Task Control Block (TCB)
 typedef struct task_t
@@ -34,6 +57,9 @@ typedef struct task_t
 // estrutura que define um semáforo
 typedef struct
 {
+  task_t *queue ; // Fila de tarefas do semáforo
+  int counter ; // Contador (vagas)
+  int destroyed ; // Flag que indica se o semáforo está destruído(1) ou não(0)
   // preencher quando necessário
 } semaphore_t ;
 

@@ -13,6 +13,8 @@ pingpong-contab-prio
 pingpong-maintask
 pingpong-join
 pingpong-sleep
+pingpong-semaphore
+pingpong-racecond
 *.out
 *.txt
 *.sol

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
 
-PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9
+PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9 p10
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -9,7 +9,7 @@ OBJS_p0 = testafila.o
 EXEC_p0 = testafila
 
 # p2
-LIBOBJS_p2 = ppos_core.o
+LIBOBJS_p2 = ppos_core.o ppos_ipc.o
 HEADERS_p2 = ppos.h ppos_data.h
 OBJS_p2_1 = pingpong-tasks1.o
 EXEC_p2_1 = pingpong-tasks1
@@ -50,6 +50,12 @@ EXEC_p8 = pingpong-join
 OBJS_p9 = pingpong-sleep.o
 EXEC_p9 = pingpong-sleep
 
+# p10
+OBJS_p10_1 = pingpong-semaphore.o
+EXEC_p10_1 = pingpong-semaphore
+OBJS_p10_2 = pingpong-racecond.o
+EXEC_p10_2 = pingpong-racecond
+
 
 all: $(PROJECTS)
 
@@ -66,6 +72,7 @@ p6: $(EXEC_p6_1) $(EXEC_p6_2)
 p7: $(EXEC_p7)
 p8: $(EXEC_p8)
 p9: $(EXEC_p9)
+p10: $(EXEC_p10_1) $(EXEC_p10_2)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -117,10 +124,17 @@ $(OBJS_p8) : %.o : %.c
 $(EXEC_p9): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p9)
 $(OBJS_p9) : %.o : %.c
 
+# p6
+$(EXEC_p10_1): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p10_1)
+$(OBJS_p10_1) : %.o : %.c
+
+$(EXEC_p10_2): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p10_2)
+$(OBJS_p10_2) : %.o : %.c
+
 clean:
 	rm -f *.o
 
 purge: clean
 	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
 	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) $(EXEC_p6_1) \
-	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) $(EXEC_p9) *.out
+	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) $(EXEC_p9) $(EXEC_p10_1) $(EXEC_p10_2) *.out

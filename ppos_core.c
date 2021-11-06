@@ -51,6 +51,10 @@ task_t *scheduler()
     if (!user_tasks_queue)
         return NULL;
 
+#ifdef DEBUG
+    queue_print("PPOS (scheduler): User's ready tasks -> ", (queue_t *)user_tasks_queue, print_task_id);
+#endif
+
     task_t *cur = user_tasks_queue, *choosen_task = cur;
     int max_prio = user_tasks_queue->dynam_prio;
 
@@ -117,6 +121,9 @@ void wake_tasks()
             cur->state = READY;
             queue_remove((queue_t **)&sleeping_tasks_queue, (queue_t *)cur);
             queue_append((queue_t **)&user_tasks_queue, (queue_t *)cur);
+#ifdef DEBUG
+            fprintf(stdout, "PPOS (task_sleep): task %i woke up!\n", cur->id);
+#endif
         }
         cur = next;
     }
@@ -136,9 +143,9 @@ void dispatcher_proc(void *arg)
     while (num_user_tasks)
     {
 
-#ifdef DEBUG
-        queue_print("PPOS (dispatcher): User's ready tasks -> ", (queue_t *)user_tasks_queue, print_task_id);
-#endif
+        // #ifdef DEBUG
+        //         queue_print("PPOS (dispatcher): User's ready tasks -> ", (queue_t *)user_tasks_queue, print_task_id);
+        // #endif
 
         task_t *next_task = scheduler();
 
@@ -402,6 +409,9 @@ int task_getprio(task_t *task)
 int task_join(task_t *task)
 {
     lock_kernel = 1;
+#ifdef DEBUG
+    fprintf(stdout, "PPOS (task_join): task %i waits task %i\n", task_id(), task->id);
+#endif
     if (!task || task->state == TERM)
     {
         lock_kernel = 0;
@@ -419,6 +429,9 @@ int task_join(task_t *task)
 void task_sleep(int t)
 {
     lock_kernel = 1;
+#ifdef DEBUG
+    fprintf(stdout, "PPOS (task_sleep): task %i will sleep for %i ms\n", task_id(), t);
+#endif
     current_task->wake_time = systime() + (unsigned int)t;
     current_task->state = SUSPENDED;
     queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);

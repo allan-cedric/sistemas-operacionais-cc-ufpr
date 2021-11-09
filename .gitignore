@@ -15,6 +15,7 @@ pingpong-join
 pingpong-sleep
 pingpong-semaphore
 pingpong-racecond
+pingpong-prodcons
 *.out
 *.txt
 *.sol

@@ -134,7 +134,7 @@ void wake_tasks()
 */
 void dispatcher_proc(void *arg)
 {
-    dispatcher.cpu_time = systime(); // Marca o tempo inicial
+    unsigned int init_disp_time = systime();
 
 #ifdef DEBUG
     fprintf(stdout, "PPOS (dispatcher): Dispatcher was launched!\n");
@@ -154,7 +154,9 @@ void dispatcher_proc(void *arg)
             counter_ticks = next_task->quantum_ticks;
 
             unsigned int init_cpu_time = systime();
+            dispatcher.cpu_time += (systime() - init_disp_time);
             task_switch(next_task);
+            init_disp_time = systime();
             next_task->cpu_time += (systime() - init_cpu_time);
 
             // Tratamento de estados da tarefa
@@ -171,6 +173,7 @@ void dispatcher_proc(void *arg)
         // Restaura tarefas dormindo
         wake_tasks();
     }
+    dispatcher.cpu_time += (systime() - init_disp_time);
     task_exit(0);
 }
 
@@ -332,7 +335,6 @@ void task_exit(int exitCode)
     switch (task_id())
     {
     case 1: // Despachante
-        current_task->cpu_time = systime() - current_task->cpu_time;
         fprintf(
             stdout, "Task %i exit: execution time %i ms, processor time %i ms, %i activations\n",
             task_id(),

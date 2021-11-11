@@ -16,6 +16,7 @@ pingpong-sleep
 pingpong-semaphore
 pingpong-racecond
 pingpong-prodcons
+pingpong-mqueue
 *.out
 *.txt
 *.sol

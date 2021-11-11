@@ -13,6 +13,7 @@
 #include "queue.h"		// biblioteca de filas genéricas
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/time.h>
 
@@ -78,6 +79,15 @@ typedef struct
 // estrutura que define uma fila de mensagens
 typedef struct
 {
+  void *buffer ; // Fila de mensagens genéricas
+  unsigned int buffer_head ; // Índice da cabeça da fila
+  unsigned int buffer_index ; // Índice de alocação
+  int num_msgs ; // Número corrente de mensagens na fila
+  int max_msgs ; // Capacidade da fila
+  int msg_size ; // Tamanho de uma mensagem
+  semaphore_t s_buffer ; // Semáforo para acessar o buffer
+  semaphore_t s_produce ; // Semáforo para inserir no buffer
+  semaphore_t s_consume ; // Semáforo para consumir do buffer
   // preencher quando necessário
 } mqueue_t ;
 

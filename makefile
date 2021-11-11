@@ -1,7 +1,8 @@
 CC = gcc
 CFLAGS = -Wall
+LDLIBS = -lm
 
-PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11
+PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -60,6 +61,10 @@ EXEC_p10_2 = pingpong-racecond
 OBJS_p11 = pingpong-prodcons.o
 EXEC_p11 = pingpong-prodcons
 
+# p12
+OBJS_p12 = pingpong-mqueue.o
+EXEC_p12 = pingpong-mqueue
+
 all: $(PROJECTS)
 
 debug: clean flags $(PROJECTS)
@@ -77,6 +82,7 @@ p8: $(EXEC_p8)
 p9: $(EXEC_p9)
 p10: $(EXEC_p10_1) $(EXEC_p10_2)
 p11: $(EXEC_p11)
+p12: $(EXEC_p12)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -139,6 +145,10 @@ $(OBJS_p10_2) : %.o : %.c
 $(EXEC_p11): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p11)
 $(OBJS_p11) : %.o : %.c
 
+# p12
+$(EXEC_p12): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p12)
+$(OBJS_p12) : %.o : %.c
+
 clean:
 	rm -f *.o
 
@@ -146,4 +156,4 @@ purge: clean
 	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
 	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) $(EXEC_p6_1) \
 	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) $(EXEC_p9) $(EXEC_p10_1) $(EXEC_p10_2) \
-	$(EXEC_p11) *.out
+	$(EXEC_p11) $(EXEC_p12) *.out

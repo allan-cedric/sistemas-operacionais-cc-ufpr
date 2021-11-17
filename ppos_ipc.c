@@ -1,3 +1,7 @@
+// --- Implementação dos mecanismos IPC do PingPongOS ---
+
+// Allan Cedric G. B. Alves da Silva - GRR20190351
+
 #include "ppos.h"
 
 extern int lock_kernel;
@@ -112,13 +116,16 @@ int mqueue_send(mqueue_t *queue, void *msg)
     if (!queue || !queue->buffer)
         return -1;
 
+    // Verifica se os semáforos estão destruídos
     if (sem_down(&queue->s_produce) < 0 || sem_down(&queue->s_buffer) < 0)
         return -1;
 
+    // buffer[buffer_index] = *msg
     memcpy(queue->buffer + queue->buffer_index * queue->msg_size, msg, queue->msg_size);
     queue->buffer_index = (queue->buffer_index + 1) % queue->max_msgs;
     queue->num_msgs++;
 
+    // Verifica se os semáforos estão destruídos
     if (sem_up(&queue->s_buffer) < 0 || sem_up(&queue->s_consume) < 0)
         return -1;
 
@@ -130,13 +137,16 @@ int mqueue_recv(mqueue_t *queue, void *msg)
     if (!queue || !queue->buffer)
         return -1;
 
+    // Verifica se os semáforos estão destruídos
     if (sem_down(&queue->s_consume) < 0 || sem_down(&queue->s_buffer) < 0)
         return -1;
 
+    // *msg = buffer[buffer_head]
     memcpy(msg, queue->buffer + queue->buffer_head * queue->msg_size, queue->msg_size);
     queue->buffer_head = (queue->buffer_head + 1) % queue->max_msgs;
     queue->num_msgs--;
 
+    // Verifica se os semáforos estão destruídos
     if (sem_up(&queue->s_buffer) < 0 || sem_up(&queue->s_produce) < 0)
         return -1;
 

@@ -85,6 +85,11 @@ task_t *scheduler()
     return choosen_task;
 }
 
+/*!
+    @brief  Termina uma tarefa
+
+    @param  task    Ponteiro para uma tarefa
+*/
 void terminate_task(task_t *task)
 {
     fprintf(
@@ -94,7 +99,7 @@ void terminate_task(task_t *task)
         task->cpu_time,
         task->cpu_activations);
 
-    // Restaura as tarefas em espera
+    // Restaura as tarefas em espera (join)
     task_t *cur = task->waiting_tasks;
     while (cur)
     {
@@ -109,23 +114,27 @@ void terminate_task(task_t *task)
     num_user_tasks--;
 }
 
+/*!
+    @brief  Rotina para o despachante acordar as tarefas que foram dormir (sleep)
+*/
 void wake_tasks()
 {
     int size = queue_size((queue_t *)sleeping_tasks_queue);
     task_t *cur = sleeping_tasks_queue;
     while (size--)
     {
-        task_t *next = cur->next;
+        task_t *next = cur->next; // Salva a ref. para o próximo elemento
         if (systime() >= cur->wake_time)
         {
             cur->state = READY;
             queue_remove((queue_t **)&sleeping_tasks_queue, (queue_t *)cur);
             queue_append((queue_t **)&user_tasks_queue, (queue_t *)cur);
+
 #ifdef DEBUG
             fprintf(stdout, "PPOS (task_sleep): task %i woke up!\n", cur->id);
 #endif
         }
-        cur = next;
+        cur = next; // Restaura para o próximo elemento
     }
 }
 
@@ -154,9 +163,11 @@ void dispatcher_proc(void *arg)
             counter_ticks = next_task->quantum_ticks;
 
             unsigned int init_cpu_time = systime();
+
             dispatcher.cpu_time += (systime() - init_disp_time);
             task_switch(next_task);
             init_disp_time = systime();
+
             next_task->cpu_time += (systime() - init_cpu_time);
 
             // Tratamento de estados da tarefa
@@ -354,6 +365,7 @@ void task_exit(int exitCode)
 int task_switch(task_t *task)
 {
     lock_kernel = 1;
+
     // #ifdef DEBUG
     //     fprintf(stdout, "PPOS (task_switch): current task %i to task %i...\n", task_id(), task->id);
     // #endif
@@ -379,6 +391,7 @@ int task_id()
 void task_yield()
 {
     lock_kernel = 1;
+
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_yield): task %i yields the CPU!\n", task_id());
 #endif
@@ -411,9 +424,11 @@ int task_getprio(task_t *task)
 int task_join(task_t *task)
 {
     lock_kernel = 1;
+
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_join): task %i waits task %i\n", task_id(), task->id);
 #endif
+
     if (!task || task->state == TERM)
     {
         lock_kernel = 0;
@@ -424,6 +439,7 @@ int task_join(task_t *task)
     queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);
     queue_append((queue_t **)&task->waiting_tasks, (queue_t *)current_task);
     task_switch(&dispatcher);
+
     lock_kernel = 0;
     return task->exit_code;
 }
@@ -431,9 +447,11 @@ int task_join(task_t *task)
 void task_sleep(int t)
 {
     lock_kernel = 1;
+
 #ifdef DEBUG
     fprintf(stdout, "PPOS (task_sleep): task %i will sleep for %i ms\n", task_id(), t);
 #endif
+
     current_task->wake_time = systime() + (unsigned int)t;
     current_task->state = SUSPENDED;
     queue_remove((queue_t **)&user_tasks_queue, (queue_t *)current_task);

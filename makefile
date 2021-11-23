@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall
-LDLIBS = -lm
+LDLIBS = -lm -lrt
 
-PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12
+PROJECTS = p0 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13
 
 # p0
 LIBOBJS_p0 = queue.o
@@ -65,6 +65,14 @@ EXEC_p11 = pingpong-prodcons
 OBJS_p12 = pingpong-mqueue.o
 EXEC_p12 = pingpong-mqueue
 
+# p13
+LIBOBJS_p13 = ppos_disk.o disk.o
+HEADERS_p13 = ppos_disk.h disk.h
+OBJS_p13_1 = pingpong-disco1.o
+EXEC_p13_1 = pingpong-disco1
+OBJS_p13_2 = pingpong-disco2.o
+EXEC_p13_2 = pingpong-disco2
+
 all: $(PROJECTS)
 
 debug: clean flags $(PROJECTS)
@@ -83,6 +91,7 @@ p9: $(EXEC_p9)
 p10: $(EXEC_p10_1) $(EXEC_p10_2)
 p11: $(EXEC_p11)
 p12: $(EXEC_p12)
+p13: $(EXEC_p13_1) $(EXEC_p13_2)
 
 # p0
 $(EXEC_p0): $(LIBOBJS_p0) $(OBJS_p0)
@@ -149,6 +158,14 @@ $(OBJS_p11) : %.o : %.c
 $(EXEC_p12): $(LIBOBJS_p0) $(LIBOBJS_p2) $(OBJS_p12)
 $(OBJS_p12) : %.o : %.c
 
+# p12
+$(EXEC_p13_1): $(LIBOBJS_p0) $(LIBOBJS_p2) $(LIBOBJS_p13) $(OBJS_p13_1)
+$(LIBOBJS_p13) : %.o : %.c $(HEADERS_p13)
+$(OBJS_p13_1) : %.o : %.c
+
+$(EXEC_p13_2): $(LIBOBJS_p0) $(LIBOBJS_p2) $(LIBOBJS_p13) $(OBJS_p13_2)
+$(OBJS_p13_2) : %.o : %.c
+
 clean:
 	rm -f *.o
 
@@ -156,4 +173,4 @@ purge: clean
 	rm -f $(EXEC_p0) $(EXEC_p2_1) $(EXEC_p2_2) $(EXEC_p2_3) \
 	$(EXEC_p3) $(EXEC_p4) $(EXEC_p5_1) $(EXEC_p5_2) $(EXEC_p6_1) \
 	$(EXEC_p6_2) $(EXEC_p7) $(EXEC_p8) $(EXEC_p9) $(EXEC_p10_1) $(EXEC_p10_2) \
-	$(EXEC_p11) $(EXEC_p12) *.out
+	$(EXEC_p11) $(EXEC_p12) $(EXEC_p13_1) $(EXEC_p13_2) *.out

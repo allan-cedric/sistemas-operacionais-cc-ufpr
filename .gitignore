@@ -17,6 +17,9 @@ pingpong-semaphore
 pingpong-racecond
 pingpong-prodcons
 pingpong-mqueue
+pingpong-disco1
+pingpong-disco2
 *.out
 *.txt
 *.sol
+*.dat

@@ -22,4 +22,5 @@ pingpong-disco2
 *.out
 *.txt
 *.sol
-*.dat
+*-*.dat
+*_*.dat

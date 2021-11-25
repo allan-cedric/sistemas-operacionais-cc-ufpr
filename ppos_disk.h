@@ -29,7 +29,7 @@ typedef struct
 // estrutura que representa um disco no sistema operacional
 typedef struct
 {
-  int num_blocks ; // Quantidade blocos do disco
+  int num_blocks ; // Quantidade de blocos do disco
   int block_size ; // Tamanho de um bloco do disco
   task_t driver ; // Driver do disco
   semaphore_t s_access ;  // Semáforo de acesso ao disco

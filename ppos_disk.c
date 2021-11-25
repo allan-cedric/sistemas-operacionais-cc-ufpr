@@ -22,9 +22,14 @@ void driver_proc(void *arg)
 
             first->requester->state = READY;
             queue_append((queue_t **)&user_tasks_queue, (queue_t *)first->requester);
+
+            free(first);
+            first = NULL;
+
             disk.sig_disk = 0;
         }
 
+        // Se o disco está livre e tem pedidos pendentes
         if (disk_cmd(DISK_CMD_STATUS, 0, 0) == 1 && disk.queue)
             disk_cmd(disk.queue->op_type, disk.queue->block, disk.queue->buffer);
 
@@ -58,21 +63,23 @@ int disk_mgr_init(int *numBlocks, int *blockSize)
     *numBlocks = disk_cmd(DISK_CMD_DISKSIZE, 0, 0);
     if (*numBlocks < 0)
         return -1;
+    disk.num_blocks = *numBlocks;
 
     *blockSize = disk_cmd(DISK_CMD_BLOCKSIZE, 0, 0);
     if (*blockSize < 0)
         return -1;
+    disk.block_size = *blockSize;
 
     // Inicializa driver de disco
     if (task_create(&disk.driver, driver_proc, NULL) < 0)
         return -1;
-    num_user_tasks--;
+    num_user_tasks--; // Desconsidera o driver como tarefa do usuário
 
     // Inicializa semáforo de acesso ao disco
     if (sem_create(&disk.s_access, 1) < 0)
         return -1;
 
-    disk.queue = NULL; // Inicializa fila de solicitantes
+    disk.queue = NULL; // Inicializa a fila do disco
 
     // Define a rotina de tratamento para acordar o gerente de disco
     disk.sig_handler.sa_handler = wake_driver;
@@ -90,6 +97,10 @@ int disk_mgr_init(int *numBlocks, int *blockSize)
 
 int disk_block_read(int block, void *buffer)
 {
+    // Bloco fora do escopo do disco
+    if (block < 0 || block > disk.num_blocks - 1)
+        return -1;
+
     // obtém o semáforo de acesso ao disco
     sem_down(&disk.s_access);
 
@@ -128,6 +139,10 @@ int disk_block_read(int block, void *buffer)
 
 int disk_block_write(int block, void *buffer)
 {
+    // Bloco fora do escopo do disco
+    if (block < 0 || block > disk.num_blocks - 1)
+        return -1;
+
     // obtém o semáforo de acesso ao disco
     sem_down(&disk.s_access);
 
